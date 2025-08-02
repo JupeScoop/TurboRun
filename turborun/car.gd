@@ -7,7 +7,7 @@ const FRAME_RIGHT_SOFT := 3
 const FRAME_RIGHT_HARD := 4
 
 @export var frame_width := 1039
-@export var turn_hold_time := 0.5
+@export var turn_hold_time := 0.2
 
 var left_hold := 0.0
 var right_hold := 0.0

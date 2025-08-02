@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bnmtjnnba3spv"]
+[gd_scene load_steps=4 format=3 uid="uid://bnmtjnnba3spv"]
 
 [ext_resource type="PackedScene" uid="uid://b8ltkuaq6o8kc" path="res://sprite_2d.tscn" id="1_c2fg6"]
 [ext_resource type="Texture2D" uid="uid://qgshk0denxw1" path="res://Assets/Car/Black911.png" id="2_8f8h1"]
+[ext_resource type="Script" uid="uid://cd0i5e1kisitb" path="res://camera_2d.gd" id="3_tcixb"]
 
 [node name="Node2D" type="Node2D"]
 
@@ -11,5 +12,10 @@ scale = Vector2(-1, 1)
 texture = ExtResource("2_8f8h1")
 region_enabled = true
 
-[node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(-579, -303)
+[node name="Camera2D" type="Camera2D" parent="Sprite2D"]
+position = Vector2(-37, -20)
+rotation = 3.14159
+scale = Vector2(1, -1)
+offset = Vector2(0, -300)
+zoom = Vector2(0.4, 0.4)
+script = ExtResource("3_tcixb")
