@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b8ltkuaq6o8kc"]
+
+[ext_resource type="Script" uid="uid://bxbddos8tokhv" path="res://car.gd" id="1_mehiu"]
+
+[node name="Sprite2D" type="Sprite2D"]
+script = ExtResource("1_mehiu")
