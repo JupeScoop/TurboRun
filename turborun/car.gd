@@ -12,9 +12,20 @@ const FRAME_RIGHT_HARD := 4
 var left_hold := 0.0
 var right_hold := 0.0
 
+@onready var road_node = get_node("../Road")  # Adjust path if needed
+
 func _process(delta):
+	# Steering input
 	var steer_left := Input.is_action_pressed("ui_left")
 	var steer_right := Input.is_action_pressed("ui_right")
+
+	# Send steering to road
+	if steer_left:
+		road_node.set_steering(-1)
+	elif steer_right:
+		road_node.set_steering(1)
+	else:
+		road_node.set_steering(0)
 
 	# Update hold timers
 	if steer_left:
@@ -27,16 +38,14 @@ func _process(delta):
 		left_hold = 0.0
 		right_hold = 0.0
 
-	# Determine frame
-	# Invert frame direction for pseudo-3D
+	# Determine frame (flipped for pseudo-3D direction)
 	var selected_frame := FRAME_CENTER
 	if right_hold > 0.0:
 		selected_frame = FRAME_LEFT_HARD if right_hold >= turn_hold_time else FRAME_LEFT_SOFT
 	elif left_hold > 0.0:
 		selected_frame = FRAME_RIGHT_HARD if left_hold >= turn_hold_time else FRAME_RIGHT_SOFT
 
-
-	# Display
+	# Display frame
 	region_enabled = true
 	if texture:
 		var region_height = texture.get_height()

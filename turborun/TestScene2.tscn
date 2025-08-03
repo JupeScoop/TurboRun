@@ -1,21 +1,26 @@
-[gd_scene load_steps=4 format=3 uid="uid://bnmtjnnba3spv"]
+[gd_scene load_steps=5 format=3 uid="uid://bnmtjnnba3spv"]
 
 [ext_resource type="PackedScene" uid="uid://b8ltkuaq6o8kc" path="res://sprite_2d.tscn" id="1_c2fg6"]
 [ext_resource type="Texture2D" uid="uid://qgshk0denxw1" path="res://Assets/Car/Black911.png" id="2_8f8h1"]
 [ext_resource type="Script" uid="uid://cd0i5e1kisitb" path="res://camera_2d.gd" id="3_tcixb"]
+[ext_resource type="Script" uid="uid://3fhyrua4d2ad" path="res://road.gd" id="4_qwmna"]
 
 [node name="Node2D" type="Node2D"]
 
-[node name="Sprite2D" parent="." instance=ExtResource("1_c2fg6")]
+[node name="Car" parent="." instance=ExtResource("1_c2fg6")]
 position = Vector2(-616, -283)
 scale = Vector2(-1, 1)
 texture = ExtResource("2_8f8h1")
 region_enabled = true
 
-[node name="Camera2D" type="Camera2D" parent="Sprite2D"]
+[node name="Camera2D" type="Camera2D" parent="Car"]
 position = Vector2(-37, -20)
 rotation = 3.14159
 scale = Vector2(1, -1)
 offset = Vector2(0, -300)
 zoom = Vector2(0.4, 0.4)
 script = ExtResource("3_tcixb")
+
+[node name="Road" type="Node2D" parent="."]
+z_index = -1
+script = ExtResource("4_qwmna")
