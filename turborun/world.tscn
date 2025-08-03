@@ -1,4 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://b8ltkuaq6o8kc"]
+[gd_scene load_steps=4 format=3 uid="uid://un6e0eo4yy0n"]
+
+[ext_resource type="PackedScene" uid="uid://3oeobbhucpd6" path="res://RoadRenderer.tscn" id="1_f3sb7"]
+[ext_resource type="Script" uid="uid://b7nfejxhfw62c" path="res://sprite_2d_car.gd" id="2_fj7yv"]
 
 [sub_resource type="GDScript" id="GDScript_036b0"]
 script/source = "extends Sprite2D
@@ -91,5 +94,16 @@ func _update_region(frame_index: int) -> void:
 		region_rect = Rect2(frame_index * frame_width, 0, frame_width, h)
 "
 
-[node name="Sprite2D" type="Sprite2D"]
+[node name="World" type="Node2D"]
+
+[node name="Road Generator" parent="." instance=ExtResource("1_f3sb7")]
 script = SubResource("GDScript_036b0")
+frame_width = 1040
+turn_hold_time = 0.2
+max_drift = 300.0
+drift_speed = 8.0
+max_tilt = 15.0
+tilt_speed = 8.0
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+script = ExtResource("2_fj7yv")
