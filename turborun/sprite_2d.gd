@@ -16,8 +16,8 @@ const FRAME_RIGHT_HARD  = 4
 @export var turn_hold_time: float = 0.2
 
 # ── Tilt tuning ──
-@export var max_tilt: float   = 20.0   # increased tilt for clearer feedback
-@export var tilt_speed: float = 7.0    # bit snappier tilt response
+#@export var max_tilt: float   = 20.0   # increased tilt for clearer feedback
+#@export var tilt_speed: float = 7.0    # bit snappier tilt response
 
 # ── Scaling & positioning ──
 @export var scale_factor: Vector2 = Vector2(0.5, 0.5)
@@ -61,8 +61,8 @@ func _process(delta: float) -> void:
 	position.x = get_viewport_rect().size.x * 0.5
 
 	# Tilt for feedback
-	var target_rot = deg_to_rad(steer_val * max_tilt)
-	rotation = lerp_angle(rotation, target_rot, tilt_speed * delta)
+#	var target_rot = deg_to_rad(steer_val * max_tilt)
+#	rotation = lerp_angle(rotation, target_rot, tilt_speed * delta)
 
 	# Vertical positioning
 	_update_position()
