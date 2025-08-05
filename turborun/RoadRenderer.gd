@@ -1,4 +1,4 @@
-# RoadRenderer.gd (OutRun-style with Throttle & Smooth Deceleration & Steering Smoothing)
+# RoadRenderer.gd (OutRun-style with Throttle, Smooth Decel & Speed-scaled Steering)
 extends Node2D
 
 # Configurable parameters
@@ -8,20 +8,20 @@ extends Node2D
 @export var camera_height: float     = 1000.0
 @export var camera_depth: float      = 200.0
 @export var draw_distance: int       = 250
-@export var base_speed: float        = 0.0    # cruise speed
-@export var max_speed: float         = 800.0    # top speed when fully throttled
+@export var base_speed: float        = 0.0     # cruise speed
+@export var max_speed: float         = 800.0   # top speed when fully throttled
 @export var horizon_pct: float       = 0.3
-@export var curve_scale: float       = 300.0    # bend visibility
-@export var steer_influence: float   = 0.00007    # steering effect magnitude
-@export var steer_smooth_rate: float = 3.0      # how quickly steering influence smooths
-@export var accel_rate: float        = 5.0      # acceleration smoothing rate
-@export var decel_rate: float        = 2.0      # deceleration smoothing rate
+@export var curve_scale: float       = 300.0   # bend visibility
+@export var steer_influence: float   = 0.00007 # steering effect magnitude
+@export var steer_smooth_rate: float = 3.0     # how quickly steering influence smooths
+@export var accel_rate: float        = 5.0     # acceleration smoothing rate
+@export var decel_rate: float        = 2.0     # deceleration smoothing rate
 
 # Runtime state
 var player_z: float               = 0.0
 var current_curve: float          = 0.0
-var steering: float               = 0.0    # raw input from Car.gd
-var smooth_steering: float        = 0.0    # smoothed steering value
+var steering: float               = 0.0   # raw input from Car.gd
+var smooth_steering: float        = 0.0   # smoothed steering value
 var current_speed: float          = base_speed
 var segments: Array[Dictionary]   = []
 
@@ -44,9 +44,15 @@ func _process(delta: float) -> void:
 	# Smooth steering input
 	smooth_steering = lerp(smooth_steering, steering, clamp(delta * steer_smooth_rate, 0.0, 1.0))
 
-	# Blend natural curve + smoothed steering
-	var base_curve: float = sin(player_z * 0.0015) * 0.00015
-	current_curve = lerp(current_curve, base_curve + smooth_steering * steer_influence, 0.2)
+	# Compute speed factor (0–1)
+	var speed_factor: float = clamp(current_speed / max_speed, 0.0, 1.0)
+
+	# Blend natural curve + steering scaled by speed
+	var base_curve: float = sin(player_z * 0.0017) * 0.00017
+	if current_speed > 10.0:
+		current_curve = lerp(current_curve, base_curve + smooth_steering * steer_influence * speed_factor, 0.2)
+	else:
+		current_curve = lerp(current_curve, base_curve, 0.2)
 
 	queue_redraw()
 
