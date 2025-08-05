@@ -6,11 +6,11 @@ extends Node2D
 @export var road_width: float      = 3000.0
 @export var camera_height: float   = 1000.0
 @export var camera_depth: float    = 200.0
-@export var draw_distance: int     = 200
-@export var speed: float           = 200.0
+@export var draw_distance: int     = 250
+@export var speed: float           = 500.0
 @export var horizon_pct: float     = 0.4
 @export var curve_scale: float     = 300.0    # increased for more visible bend
-@export var steer_influence: float = 0.00018  # positive influence: right turns bend right, left bends left    # stronger steering effect
+@export var steer_influence: float = 0.0001  # positive influence: right turns bend right, left bends left    # stronger steering effect
 
 # Runtime state
 var player_z: float             = 0.0
