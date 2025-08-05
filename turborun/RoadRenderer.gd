@@ -1,4 +1,4 @@
-# RoadRenderer.gd (OutRun-style with Throttle)
+# RoadRenderer.gd (OutRun-style with Throttle & Smooth Deceleration)
 extends Node2D
 
 @export var segment_count: int    = 2000
@@ -7,46 +7,47 @@ extends Node2D
 @export var camera_height: float  = 1000.0
 @export var camera_depth: float   = 200.0
 @export var draw_distance: int    = 250
-@export var base_speed: float     = 0.0
-@export var max_speed: float      = 800.0
+@export var base_speed: float     = 0.0    # cruise speed
+@export var max_speed: float      = 800.0    # top speed when fully throttled
 @export var horizon_pct: float    = 0.4
-@export var curve_scale: float    = 300.0
-@export var steer_influence: float= 0.0001
-@export var accel_rate: float     = 0.70
+@export var curve_scale: float    = 300.0    # bend visibility
+@export var steer_influence: float= 0.00006    # steering effect
+@export var accel_rate: float     = 5.0      # how quickly speed adjusts
+@export var decel_rate: float     = 2.0      # deceleration strength when no throttle
 
 var player_z: float              = 0.0
 var current_curve: float         = 0.0
 var steering: float              = 0.0
-var throttle_time: float         = 0.0
+var current_speed: float         = base_speed
 var segments: Array[Dictionary]  = []
 
-func _ready():
+func _ready() -> void:
 	_build_track()
 
-func _process(delta: float):
-	# Throttle (space)
-	if Input.is_action_pressed("ui_select"):
-		throttle_time += delta
-	else:
-		throttle_time = 0.0
+func _process(delta: float) -> void:
+	# Determine desired speed
+	var throttle = Input.is_action_pressed("ui_select")
+	var target_speed: float = max_speed if throttle else base_speed
 
-	# Speed via arctan ramp
-	var tnorm = atan(throttle_time * accel_rate) / (PI * 0.5)
-	var speed = lerp(base_speed, max_speed, clamp(tnorm, 0.0, 1.0))
+	# Smoothly move current_speed toward target_speed
+	var rate: float = accel_rate if throttle else decel_rate
+	current_speed = lerp(current_speed, target_speed, clamp(delta * rate, 0.0, 1.0))
 
-	# Move player_z
-	var total_len = segment_count * segment_length
-	player_z = fposmod(player_z + delta * speed, total_len)
+	# Advance along track
+	var total_length = segment_count * segment_length
+	player_z = fposmod(player_z + delta * current_speed, total_length)
 
-	# Curve blending
+	# Blend natural curve + steering
 	var base_curve = sin(player_z * 0.0015) * 0.00015
 	current_curve = lerp(current_curve, base_curve + steering * steer_influence, 0.2)
+
 	queue_redraw()
 
-func _draw():
+func _draw() -> void:
 	var vs = get_viewport_rect().size
 	var cx = vs.x * 0.5
 	var hy = vs.y * horizon_pct
+
 	var x_off = 0.0
 	var dx = 0.0
 	var base_i = int(player_z / segment_length) % segment_count
@@ -76,7 +77,7 @@ func _draw():
 		dx -= current_curve * curve_scale
 		x_off -= dx
 
-func _build_track():
+func _build_track() -> void:
 	segments.clear()
 	var z = 0.0
 	for i in range(segment_count):
