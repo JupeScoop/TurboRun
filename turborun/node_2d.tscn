@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://cny343snioslv"]
+[gd_scene load_steps=5 format=3 uid="uid://cny343snioslv"]
 
 [ext_resource type="Texture2D" uid="uid://qgshk0denxw1" path="res://Assets/Car/Black911.png" id="1_0e48y"]
 [ext_resource type="PackedScene" uid="uid://3oeobbhucpd6" path="res://RoadRenderer.tscn" id="1_epypp"]
 [ext_resource type="Script" uid="uid://7upqsae0ej7r" path="res://sprite_2d.gd" id="1_wtcfe"]
+[ext_resource type="AudioStream" uid="uid://ddchtddmo1pk4" path="res://Assets/Music/Tundra17.mp3" id="4_0hol4"]
 
 [node name="Node2D" type="Node2D"]
 
@@ -11,3 +12,8 @@
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_0e48y")
 script = ExtResource("1_wtcfe")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_0hol4")
+autoplay = true
+parameters/looping = true

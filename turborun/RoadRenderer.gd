@@ -4,16 +4,16 @@ extends Node2D
 # Configurable parameters
 @export var segment_count: int       = 2000
 @export var segment_length: float    = 80.0
-@export var road_width: float        = 3000.0
+@export var road_width: float        = 3500.0
 @export var camera_height: float     = 1000.0
 @export var camera_depth: float      = 200.0
 @export var draw_distance: int       = 250
 @export var base_speed: float        = 0.0     # cruise speed
 @export var max_speed: float         = 800.0   # top speed when fully throttled
-@export var horizon_pct: float       = 0.3
+@export var horizon_pct: float       = 0.35
 @export var curve_scale: float       = 300.0   # bend visibility
 @export var steer_influence: float   = 0.00007 # steering effect magnitude
-@export var steer_smooth_rate: float = 3.0     # how quickly steering influence smooths
+@export var steer_smooth_rate: float = 2.0     # how quickly steering influence smooths
 @export var accel_rate: float        = 5.0     # acceleration smoothing rate
 @export var decel_rate: float        = 2.0     # deceleration smoothing rate
 
@@ -35,7 +35,7 @@ func _process(delta: float) -> void:
 
 	# Smooth speed change
 	var speed_rate: float = accel_rate if throttle else decel_rate
-	current_speed = lerp(current_speed, target_speed, clamp(delta * speed_rate, 0.0, 1.0))
+	current_speed = lerp(current_speed, target_speed, clamp(delta * speed_rate, 0.0, .90))
 
 	# Advance along track
 	var total_length: float = segment_count * segment_length
