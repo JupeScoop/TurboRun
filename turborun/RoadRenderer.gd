@@ -9,13 +9,13 @@ extends Node2D
 @export var camera_depth: float      = 200.0
 @export var draw_distance: int       = 250
 @export var base_speed: float        = 0.0     # cruise speed
-@export var max_speed: float         = 800.0   # top speed when fully throttled
+@export var max_speed: float         = 500.0   # top speed when fully throttled
 @export var horizon_pct: float       = 0.35
 @export var curve_scale: float       = 300.0   # bend visibility
-@export var steer_influence: float   = 0.00007 # steering effect magnitude
-@export var steer_smooth_rate: float = 2.0     # how quickly steering influence smooths
+@export var steer_influence: float   = 0.0004 # steering effect magnitude
+@export var steer_smooth_rate: float = 1.0     # how quickly steering influence smooths
 @export var accel_rate: float        = 5.0     # acceleration smoothing rate
-@export var decel_rate: float        = 2.0     # deceleration smoothing rate
+@export var decel_rate: float        = 0.50     # deceleration smoothing rate
 
 # Runtime state
 var player_z: float               = 0.0
@@ -42,7 +42,7 @@ func _process(delta: float) -> void:
 	player_z = fposmod(player_z + delta * current_speed, total_length)
 
 	# Smooth steering input
-	smooth_steering = lerp(smooth_steering, steering, clamp(delta * steer_smooth_rate, 0.0, 1.0))
+	smooth_steering = lerp(smooth_steering, steering, clamp(delta * steer_smooth_rate, 0.0, 1.5))
 
 	# Compute speed factor (0–1)
 	var speed_factor: float = clamp(current_speed / max_speed, 0.0, 1.0)
