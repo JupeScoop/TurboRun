@@ -1,6 +1,6 @@
 # RoadRenderer.gd (OutRun-style with customizable curves)
 extends Node2D
-
+signal track_completed
 # Configurable parameters
 @export var segment_count: int       = 2000
 @export var segment_length: float    = 80.0
@@ -21,10 +21,16 @@ extends Node2D
 # Each entry: start Z, length of segment, curvature strength
 # e.g. {"start": 1000.0, "length": 2000.0, "curve": 0.0006}
 @export var curve_defs: Array[Dictionary] = [
-	{ "start":  1000.0, "length": 2000.0, "curve":  0.00008 },
-	{ "start":  4000.0, "length": 1500.0, "curve": -0.00008 },
-	{ "start":  6000.0, "length": 1000.0, "curve":  0.00008 },
+	{ "start":  1000.0, "length": 8000.0, "curve":  0.0002 },
+	{ "start":  9000.0, "length": 1000.0, "curve": -0.0002 },
+	{ "start":  10000.0, "length": 1000.0, "curve":  0.00008 },
+	{ "start":  11000.0, "length": 10000.0, "curve":  0 }
 ]
+
+# ── NEW exports/vars Finish Line ────────────────────────────────────────────
+@export var finish_scene_path: String = ""  # leave blank to quit(), or set to your end‐scene
+var finish_z: float = 0.0
+var race_finished: bool = false
 
 # Runtime state
 var player_z: float               = 0.0
@@ -37,34 +43,53 @@ var segments: Array[Dictionary]   = []
 func _ready() -> void:
 	_build_track()
 
+	# ── compute finish line Z ───────────────────────────────────
+	finish_z = 0.0
+	for def in curve_defs:
+		finish_z = max(finish_z, def.start + def.length)
+
 func _process(delta: float) -> void:
-	# — speed & movement (unchanged) —
+	# ── speed & movement ───────────────────────────────────────
 	var throttle = Input.is_action_pressed("ui_select")
 	var target_speed = max_speed if throttle else base_speed
 	var speed_rate = accel_rate if throttle else decel_rate
 	current_speed = lerp(current_speed, target_speed, clamp(delta * speed_rate, 0.0, 0.9))
 	player_z = fposmod(player_z + delta * current_speed, segment_count * segment_length)
 
-	# — steering smoothing (unchanged) —
+	# ── end‐of‐track check ───────────────────────────────────────
+	if not race_finished and player_z >= finish_z:
+		race_finished = true
+		emit_signal("track_completed")
+		if finish_scene_path != "":
+			get_tree().change_scene(finish_scene_path)
+		else:
+			get_tree().quit()
+		return
+
+	# ── steering smoothing ───────────────────────────────────────
 	smooth_steering = lerp(smooth_steering, steering, clamp(delta * steer_smooth_rate, 0.0, 1.5))
 	var speed_factor = clamp(current_speed / max_speed, 0.0, 1.0)
 
-	# ── NEW! Grab the track curve at our current position ───────────
-	var seg_index = int(player_z / segment_length) % segment_count
-	var track_curve = segments[seg_index].curve
+	# ── Continuous track curve (Option 1) ───────────────────────
+	var curve_val: float = 0.0
+	for def in curve_defs:
+		if player_z >= def.start and player_z < def.start + def.length:
+			var t: float = (player_z - def.start) / def.length
+			curve_val = def.curve * sin(t * PI)
+			break
 
-	# Blend toward the track curve + any steering
+	# ── Blend toward curve + steering ───────────────────────────
 	if current_speed > 10.0:
 		current_curve = lerp(
 			current_curve,
-			track_curve + smooth_steering * steer_influence * speed_factor,
+			curve_val + smooth_steering * steer_influence * speed_factor,
 			0.2
 		)
 	else:
-		current_curve = lerp(current_curve, track_curve, 0.2)
+		current_curve = lerp(current_curve, curve_val, 0.2)
 
 	queue_redraw()
-
+ 
 func _draw() -> void:
 	var vs = get_viewport_rect().size
 	var cx = vs.x * 0.5
@@ -105,25 +130,13 @@ func _draw() -> void:
 		x_off -= dx
 
 # make sure PI is available (Godot has it built-in)
-# make sure PI is available (Godot has it built-in)
 func _build_track() -> void:
 	segments.clear()
 	var z_pos := 0.0
 	for i in range(segment_count):
 		var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
-
-		# ── EASY IN/OUT via sine ramp ──────────────────────────────────
-		var curve_val := 0.0
-		for def in curve_defs:
-			var t : float = (z_pos - def.start) / def.length
-			if t >= 0.0 and t <= 1.0:
-				# sin(0)=0 at start, sin(pi/2)=1 at mid, sin(pi)=0 at end
-				curve_val = def.curve * sin(t * PI)
-				break
-
 		segments.append({
 			"z":     z_pos,
-			"color": seg_color,
-			"curve": curve_val
+			"color": seg_color
 		})
 		z_pos += segment_length
