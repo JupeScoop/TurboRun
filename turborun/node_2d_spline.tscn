@@ -1,0 +1,36 @@
+[gd_scene load_steps=5 format=3 uid="uid://b4ova1ju0rsit"]
+
+[ext_resource type="PackedScene" uid="uid://3oeobbhucpd6" path="res://RoadRenderer.tscn" id="1_ydyh7"]
+[ext_resource type="Script" uid="uid://cn8vfmplv76fv" path="res://SplineRodRenderer.gd" id="2_jqsrv"]
+[ext_resource type="AudioStream" uid="uid://ddchtddmo1pk4" path="res://Assets/Music/Tundra17.mp3" id="4_glk41"]
+
+[sub_resource type="Curve2D" id="Curve2D_0hol4"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -5.54266, 21.3138, -293.613, 1612.2, 293.613, -1612.2, 1444.12, -14634.6, -6781.89, 3587.54, 6781.89, -3587.54, 5665.17, -35917.9, -6047.56, 939.019, 6047.56, -939.019, 12477.9, -11649.9, 0, 0, 0, 0, 33386.5, -26891.9, 656.836, -305.05, -656.836, 305.05, 45747.9, -36934.3, -968.649, 790.662, 968.649, -790.662, 30034, -48695.4)
+}
+point_count = 7
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Node2D" parent="." instance=ExtResource("1_ydyh7")]
+rotation = 0.00651771
+script = ExtResource("2_jqsrv")
+path2d_node = NodePath("../Path2D")
+segment_count = 400
+draw_distance = 200
+road_width = 2000.0
+horizon_pct = 0.5
+bake_interval = 1.0
+max_speed = 400.0
+decel_rate = 2.0
+steer_speed = 200.0
+steer_smooth_rate = 1.5
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_glk41")
+parameters/looping = true
+
+[node name="Path2D" type="Path2D" parent="."]
+position = Vector2(3777, 662)
+rotation = 0.496338
+curve = SubResource("Curve2D_0hol4")
