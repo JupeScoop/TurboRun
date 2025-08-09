@@ -16,6 +16,10 @@ signal track_completed
 @export var steer_smooth_rate: float = 0.8       
 @export var accel_rate: float	     = 0.75
 @export var decel_rate: float	     = 1.0
+
+# ── Sky parameters ────────────────────────────────────────────────
+@export var sky_texture: Texture2D = preload("res://Assets/Scenery/Jupe Animation.png")
+@export var sky_scroll_speed: float = 50.0
  
 # ── Tree parameters ────────────────────────────────────────────────
 @export var tree_spacing: int	     = 4     # segments between trees
@@ -47,6 +51,7 @@ var steering: float		  = 0.0
 var smooth_steering: float	  = 0.0
 var current_speed: float	  = base_speed
 var segments: Array[Dictionary]	  = []
+var sky_offset: float             = 0.0
 
 func _ready() -> void:
 	randomize()
@@ -97,12 +102,23 @@ func _process(delta: float) -> void:
 	else:
 		current_curve = lerp(current_curve, curve_val, 0.2)
 
+        sky_offset += current_curve * current_speed * delta * sky_scroll_speed
 	queue_redraw()
  
 func _draw() -> void:
 	var vs = get_viewport_rect().size
 	var cx = vs.x * 0.5
 	var horizon_y = vs.y * horizon_pct
+
+        if sky_texture:
+                var scale = horizon_y / sky_texture.get_height()
+                var sky_w = sky_texture.get_width() * scale
+                var offset = fposmod(sky_offset, sky_w)
+                var x = -offset
+                while x < vs.x:
+                        draw_texture_rect(sky_texture, Rect2(x, 0, sky_w, horizon_y), false)
+                        x += sky_w
+
 
 	var frame_w = 0.0
 	var frame_h = 0.0
