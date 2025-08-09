@@ -9,14 +9,14 @@ signal track_completed
 @export var camera_depth: float	     = 200.0
 @export var draw_distance: int	     = 250
 @export var base_speed: float	     = 0.0
-@export var max_speed: float	     = 700.0
-@export var horizon_pct: float	     = 0.35
+@export var max_speed: float	     = 2500.0
+@export var horizon_pct: float	     = 0.45
 @export var curve_scale: float	     = 300.0
-@export var steer_influence: float   = 0.0004
-@export var steer_smooth_rate: float = 1.0
+@export var steer_influence: float   = 0.0003
+@export var steer_smooth_rate: float = 0.8       
 @export var accel_rate: float	     = 0.75
-@export var decel_rate: float	     = 0.75
-
+@export var decel_rate: float	     = 1.0
+ 
 # ── Tree parameters ────────────────────────────────────────────────
 @export var tree_spacing: int	     = 4     # segments between trees
 @export var tree_offset: float	     = 400.0  # distance from road edge (world units)
@@ -30,9 +30,9 @@ signal track_completed
 # e.g. {"start": 1000.0, "length": 2000.0, "curve": 0.0006}
 @export var curve_defs: Array[Dictionary] = [
 	{ "start":  1000.0, "length": 8000.0, "curve":	0.0002 },
-	{ "start":  9000.0, "length": 1000.0, "curve": -0.0002 },
-	{ "start":  10000.0, "length": 1000.0, "curve":	 0.00008 },
-	{ "start":  11000.0, "length": 10000.0, "curve":  0 }
+	{ "start":  9000.0, "length": 10000.0, "curve": -0.0003 },
+	{ "start":  19000.0, "length": 10000.0, "curve":	 0.0003  },
+	{ "start":  31000.0, "length": 100000.0, "curve":  0 }
 ]
 
 # ── NEW exports/vars Finish Line ────────────────────────────────────────────
