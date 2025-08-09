@@ -9,13 +9,20 @@ signal track_completed
 @export var camera_depth: float      = 200.0
 @export var draw_distance: int       = 250
 @export var base_speed: float        = 0.0
-@export var max_speed: float         = 500.0
+@export var max_speed: float         = 700.0
 @export var horizon_pct: float       = 0.35
 @export var curve_scale: float       = 300.0
 @export var steer_influence: float   = 0.0004
 @export var steer_smooth_rate: float = 1.0
-@export var accel_rate: float        = 5.0
-@export var decel_rate: float        = 0.50
+@export var accel_rate: float        = 0.75
+@export var decel_rate: float        = 0.75
+
+# ── Tree parameters ────────────────────────────────────────────────
+@export var tree_spacing: int        = 40     # segments between trees
+@export var tree_offset: float       = 400.0  # distance from road edge (world units)
+@export var tree_size: float         = 600.0  # base size of tree (world units)
+@export var tree_color: Color        = Color8(0,200,0)
+@export var tree_texture: Texture2D
 
 # ── NEW! Define your bends here ─────────────────────────────────
 # Each entry: start Z, length of segment, curvature strength
@@ -116,7 +123,6 @@ func _draw() -> void:
 		var y2 = horizon_y + camera_height * scale2
 		var x1 = cx + x_off
 		var x2 = cx + x_off + dx
-
 		var quad = PackedVector2Array([
 			Vector2(x1 - w1, y1),
 			Vector2(x1 + w1, y1),
@@ -125,18 +131,41 @@ func _draw() -> void:
 		])
 		draw_polygon(quad, PackedColorArray([seg.color]))
 
+		# Draw a tree if this segment has one
+		if seg.get("tree", 0) != 0:
+			var tree_x = x1 + seg.tree * (w1 + tree_offset * scale1)
+			var tree_y = y1
+			var tree_h = tree_size * scale1
+			if tree_texture:
+				var rect = Rect2(tree_x - tree_h * 0.5, tree_y - tree_h, tree_h, tree_h)
+				draw_texture_rect(tree_texture, rect, false)
+			else:
+				var tw = tree_h * 0.5
+				var tri = PackedVector2Array([
+					Vector2(tree_x, tree_y - tree_h),
+					Vector2(tree_x - tw, tree_y),
+					Vector2(tree_x + tw, tree_y)
+				])
+				draw_polygon(tri, PackedColorArray([tree_color]))
+
 		# Apply the current curve to shift road
 		dx -= current_curve * curve_scale
 		x_off -= dx
 
 # make sure PI is available (Godot has it built-in)
 func _build_track() -> void:
-	segments.clear()
-	var z_pos := 0.0
-	for i in range(segment_count):
-		var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
-		segments.append({
-			"z":     z_pos,
-			"color": seg_color
-		})
-		z_pos += segment_length
+        segments.clear()
+        var z_pos := 0.0
+        var side := 1
+        for i in range(segment_count):
+                var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
+                var seg := {
+                        "z": z_pos,
+                        "color": seg_color,
+                        "tree": 0
+                }
+                if tree_spacing > 0 and i % tree_spacing == 0:
+                        seg.tree = side
+                        side = -side
+                segments.append(seg)
+                z_pos += segment_length
