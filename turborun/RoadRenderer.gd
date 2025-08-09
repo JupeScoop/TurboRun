@@ -18,9 +18,9 @@ signal track_completed
 @export var decel_rate: float	     = 0.75
 
 # ── Tree parameters ────────────────────────────────────────────────
-@export var tree_spacing: int	     = 40     # segments between trees
+@export var tree_spacing: int	     = 4     # segments between trees
 @export var tree_offset: float	     = 400.0  # distance from road edge (world units)
-@export var tree_size: float	     = 600.0  # base size of tree (world units)
+@export var tree_size: float	     = 1800.0  # base size of tree (world units)
 @export var tree_color: Color	     = Color8(0,200,0)
 @export var tree_texture: Texture2D = preload("res://Assets/Scenery/trees.png")
 @export var tree_frame_count: int   = 7	     # frames in trees.png
