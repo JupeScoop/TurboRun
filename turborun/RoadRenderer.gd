@@ -9,13 +9,13 @@ signal track_completed
 @export var camera_depth: float      = 200.0
 @export var draw_distance: int       = 250
 @export var base_speed: float        = 0.0
-@export var max_speed: float         = 500.0
+@export var max_speed: float         = 700.0
 @export var horizon_pct: float       = 0.35
 @export var curve_scale: float       = 300.0
 @export var steer_influence: float   = 0.0004
 @export var steer_smooth_rate: float = 1.0
-@export var accel_rate: float        = 5.0
-@export var decel_rate: float        = 0.50
+@export var accel_rate: float        = 0.75
+@export var decel_rate: float        = 0.75
 
 # ── NEW! Define your bends here ─────────────────────────────────
 # Each entry: start Z, length of segment, curvature strength

@@ -22,6 +22,7 @@ road_width = 2000.0
 horizon_pct = 0.5
 bake_interval = 1.0
 max_speed = 400.0
+accel_rate = 5.0
 decel_rate = 2.0
 steer_speed = 200.0
 steer_smooth_rate = 1.5
