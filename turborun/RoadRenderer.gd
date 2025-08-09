@@ -2,35 +2,36 @@
 extends Node2D
 signal track_completed
 # Configurable parameters
-@export var segment_count: int       = 2000
+@export var segment_count: int	     = 2000
 @export var segment_length: float    = 80.0
-@export var road_width: float        = 3500.0
+@export var road_width: float	     = 3500.0
 @export var camera_height: float     = 1000.0
-@export var camera_depth: float      = 200.0
-@export var draw_distance: int       = 250
-@export var base_speed: float        = 0.0
-@export var max_speed: float         = 700.0
-@export var horizon_pct: float       = 0.35
-@export var curve_scale: float       = 300.0
+@export var camera_depth: float	     = 200.0
+@export var draw_distance: int	     = 250
+@export var base_speed: float	     = 0.0
+@export var max_speed: float	     = 700.0
+@export var horizon_pct: float	     = 0.35
+@export var curve_scale: float	     = 300.0
 @export var steer_influence: float   = 0.0004
 @export var steer_smooth_rate: float = 1.0
-@export var accel_rate: float        = 0.75
-@export var decel_rate: float        = 0.75
+@export var accel_rate: float	     = 0.75
+@export var decel_rate: float	     = 0.75
 
 # ── Tree parameters ────────────────────────────────────────────────
-@export var tree_spacing: int        = 40     # segments between trees
-@export var tree_offset: float       = 400.0  # distance from road edge (world units)
-@export var tree_size: float         = 600.0  # base size of tree (world units)
-@export var tree_color: Color        = Color8(0,200,0)
-@export var tree_texture: Texture2D
+@export var tree_spacing: int	     = 40     # segments between trees
+@export var tree_offset: float	     = 400.0  # distance from road edge (world units)
+@export var tree_size: float	     = 600.0  # base size of tree (world units)
+@export var tree_color: Color	     = Color8(0,200,0)
+@export var tree_texture: Texture2D = preload("res://Assets/Scenery/trees.png")
+@export var tree_frame_count: int   = 7	     # frames in trees.png
 
 # ── NEW! Define your bends here ─────────────────────────────────
 # Each entry: start Z, length of segment, curvature strength
 # e.g. {"start": 1000.0, "length": 2000.0, "curve": 0.0006}
 @export var curve_defs: Array[Dictionary] = [
-	{ "start":  1000.0, "length": 8000.0, "curve":  0.0002 },
+	{ "start":  1000.0, "length": 8000.0, "curve":	0.0002 },
 	{ "start":  9000.0, "length": 1000.0, "curve": -0.0002 },
-	{ "start":  10000.0, "length": 1000.0, "curve":  0.00008 },
+	{ "start":  10000.0, "length": 1000.0, "curve":	 0.00008 },
 	{ "start":  11000.0, "length": 10000.0, "curve":  0 }
 ]
 
@@ -40,14 +41,15 @@ var finish_z: float = 0.0
 var race_finished: bool = false
 
 # Runtime state
-var player_z: float               = 0.0
-var current_curve: float          = 0.0
-var steering: float               = 0.0
-var smooth_steering: float        = 0.0
-var current_speed: float          = base_speed
-var segments: Array[Dictionary]   = []
+var player_z: float		  = 0.0
+var current_curve: float	  = 0.0
+var steering: float		  = 0.0
+var smooth_steering: float	  = 0.0
+var current_speed: float	  = base_speed
+var segments: Array[Dictionary]	  = []
 
 func _ready() -> void:
+	randomize()
 	_build_track()
 
 	# ── compute finish line Z ───────────────────────────────────
@@ -102,8 +104,14 @@ func _draw() -> void:
 	var cx = vs.x * 0.5
 	var horizon_y = vs.y * horizon_pct
 
+	var frame_w = 0.0
+	var frame_h = 0.0
+	if tree_texture:
+		frame_w = tree_texture.get_width() / float(tree_frame_count)
+		frame_h = tree_texture.get_height()
+
 	var x_off = 0.0
-	var dx    = 0.0
+	var dx = 0.0
 	var base_i = int(player_z / segment_length) % segment_count
 
 	for n in range(draw_distance - 1, -1, -1):
@@ -137,8 +145,11 @@ func _draw() -> void:
 			var tree_y = y1
 			var tree_h = tree_size * scale1
 			if tree_texture:
-				var rect = Rect2(tree_x - tree_h * 0.5, tree_y - tree_h, tree_h, tree_h)
-				draw_texture_rect(tree_texture, rect, false)
+				var frame_idx = seg.get("tree_frame", 0)
+				var src = Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
+				var dest_w = tree_h * (frame_w / frame_h)
+				var rect = Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
+				draw_texture_rect_region(tree_texture, rect, src)
 			else:
 				var tw = tree_h * 0.5
 				var tri = PackedVector2Array([
@@ -154,18 +165,19 @@ func _draw() -> void:
 
 # make sure PI is available (Godot has it built-in)
 func _build_track() -> void:
-        segments.clear()
-        var z_pos := 0.0
-        var side := 1
-        for i in range(segment_count):
-                var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
-                var seg := {
-                        "z": z_pos,
-                        "color": seg_color,
-                        "tree": 0
-                }
-                if tree_spacing > 0 and i % tree_spacing == 0:
-                        seg.tree = side
-                        side = -side
-                segments.append(seg)
-                z_pos += segment_length
+	segments.clear()
+	var z_pos := 0.0
+	var side := 1
+	for i in range(segment_count):
+		var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
+		var seg := {
+			"z": z_pos,
+			"color": seg_color,
+			"tree": 0
+		}
+		if tree_spacing > 0 and i % tree_spacing == 0:
+			seg.tree = side
+			seg.tree_frame = randi() % tree_frame_count
+			side = -side
+		segments.append(seg)
+		z_pos += segment_length
