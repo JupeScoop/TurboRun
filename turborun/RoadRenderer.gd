@@ -123,35 +123,34 @@ func _draw() -> void:
 		var y2 = horizon_y + camera_height * scale2
 		var x1 = cx + x_off
 		var x2 = cx + x_off + dx
+		var quad = PackedVector2Array([
+			Vector2(x1 - w1, y1),
+			Vector2(x1 + w1, y1),
+			Vector2(x2 + w2, y2),
+			Vector2(x2 - w2, y2)
+		])
+		draw_polygon(quad, PackedColorArray([seg.color]))
 
-                var quad = PackedVector2Array([
-                        Vector2(x1 - w1, y1),
-                        Vector2(x1 + w1, y1),
-                        Vector2(x2 + w2, y2),
-                        Vector2(x2 - w2, y2)
-                ])
-                draw_polygon(quad, PackedColorArray([seg.color]))
+		# Draw a tree if this segment has one
+		if seg.get("tree", 0) != 0:
+			var tree_x = x1 + seg.tree * (w1 + tree_offset * scale1)
+			var tree_y = y1
+			var tree_h = tree_size * scale1
+			if tree_texture:
+				var rect = Rect2(tree_x - tree_h * 0.5, tree_y - tree_h, tree_h, tree_h)
+				draw_texture_rect(tree_texture, rect, false)
+			else:
+				var tw = tree_h * 0.5
+				var tri = PackedVector2Array([
+					Vector2(tree_x, tree_y - tree_h),
+					Vector2(tree_x - tw, tree_y),
+					Vector2(tree_x + tw, tree_y)
+				])
+				draw_polygon(tri, PackedColorArray([tree_color]))
 
-                # Draw a tree if this segment has one
-                if seg.get("tree", 0) != 0:
-                        var tree_x = x1 + seg.tree * (w1 + tree_offset * scale1)
-                        var tree_y = y1
-                        var tree_h = tree_size * scale1
-                        if tree_texture:
-                                var rect = Rect2(tree_x - tree_h * 0.5, tree_y - tree_h, tree_h, tree_h)
-                                draw_texture_rect(tree_texture, rect, false)
-                        else:
-                                var tw = tree_h * 0.5
-                                var tri = PackedVector2Array([
-                                        Vector2(tree_x, tree_y - tree_h),
-                                        Vector2(tree_x - tw, tree_y),
-                                        Vector2(tree_x + tw, tree_y)
-                                ])
-                                draw_polygon(tri, PackedColorArray([tree_color]))
-
-                # Apply the current curve to shift road
-                dx -= current_curve * curve_scale
-                x_off -= dx
+		# Apply the current curve to shift road
+		dx -= current_curve * curve_scale
+		x_off -= dx
 
 # make sure PI is available (Godot has it built-in)
 func _build_track() -> void:
