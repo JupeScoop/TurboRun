@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://3oeobbhucpd6" path="res://RoadRenderer.tscn" id="1_epypp"]
 [ext_resource type="Script" uid="uid://7upqsae0ej7r" path="res://sprite_2d.gd" id="1_wtcfe"]
 [ext_resource type="AudioStream" uid="uid://ddchtddmo1pk4" path="res://Assets/Music/Tundra17.mp3" id="4_0hol4"]
-[ext_resource type="Script" uid="uid://5917afa69483" path="res://race_timer.gd" id="5_v5o1p"]
+[ext_resource type="Script" uid="uid://6a17afa7a483" path="res://race_timer.gd" id="5_v5o1p"]
 
 [node name="Node2D" type="Node2D"]
 
@@ -21,25 +21,27 @@ stream = ExtResource("4_0hol4")
 autoplay = true
 parameters/looping = true
 
-[node name="SpeedGauge" type="Control" parent="."]
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -120.0
-offset_top = -120.0
-offset_right = -20.0
-offset_bottom = -20.0
-script = ExtResource("1_9x0ay")
+[node name="HUD" type="CanvasGroup" parent="."]
 
-[node name="RaceTimer" type="Label" parent="."]
+[node name="SpeedGauge" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -100.0
+offset_right = 100.0
+grow_vertical = 0
+script = ExtResource("1_9x0ay")
+road_renderer_path = NodePath("../../Node2D")
+
+[node name="RaceTimer" type="Label" parent="HUD"]
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.0
 anchor_right = 0.5
-anchor_bottom = 0.0
 offset_left = -50.0
 offset_top = 10.0
 offset_right = 50.0
-offset_bottom = 30.0
+offset_bottom = 33.0
 horizontal_alignment = 1
 script = ExtResource("5_v5o1p")
+road_renderer_path = NodePath("../../Node2D")
