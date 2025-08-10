@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://cny343snioslv"]
+[gd_scene load_steps=7 format=3 uid="uid://cny343snioslv"]
 
 [ext_resource type="Texture2D" uid="uid://qgshk0denxw1" path="res://Assets/Car/Black911.png" id="1_0e48y"]
 [ext_resource type="Script" uid="uid://3ac8qy2wskab" path="res://speed_gauge.gd" id="1_9x0ay"]
 [ext_resource type="PackedScene" uid="uid://3oeobbhucpd6" path="res://RoadRenderer.tscn" id="1_epypp"]
 [ext_resource type="Script" uid="uid://7upqsae0ej7r" path="res://sprite_2d.gd" id="1_wtcfe"]
 [ext_resource type="AudioStream" uid="uid://ddchtddmo1pk4" path="res://Assets/Music/Tundra17.mp3" id="4_0hol4"]
+[ext_resource type="Script" uid="uid://5917afa69483" path="res://race_timer.gd" id="5_v5o1p"]
 
 [node name="Node2D" type="Node2D"]
 
@@ -20,9 +21,25 @@ stream = ExtResource("4_0hol4")
 autoplay = true
 parameters/looping = true
 
-[node name="SpeedLabel" type="Label" parent="."]
-offset_left = 10.0
-offset_top = 10.0
-offset_right = 10.0
-offset_bottom = 10.0
+[node name="SpeedGauge" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -120.0
+offset_top = -120.0
+offset_right = -20.0
+offset_bottom = -20.0
 script = ExtResource("1_9x0ay")
+
+[node name="RaceTimer" type="Label" parent="."]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -50.0
+offset_top = 10.0
+offset_right = 50.0
+offset_bottom = 30.0
+horizontal_alignment = 1
+script = ExtResource("5_v5o1p")
