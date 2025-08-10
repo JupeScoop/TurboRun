@@ -13,7 +13,6 @@
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_0e48y")
 script = ExtResource("1_wtcfe")
-turn_hold_time = 0.0
 scale_factor = Vector2(0.3, 0.3)
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]

@@ -67,10 +67,10 @@ signal track_completed
 # The sin() function is used later to ease into and out of the bend.
 
 @export var curve_defs: Array[Dictionary] = [
-        { "start":  1000.0, "length":  8000.0, "curve":  0.0002 },
-        { "start":  9000.0, "length": 10000.0, "curve": -0.0003 },
-        { "start": 19000.0, "length": 10000.0, "curve":  0.0003 },
-        { "start": 31000.0, "length":100000.0, "curve":  0 }
+		{ "start":  1000.0, "length":  8000.0, "curve":  0.0002 },
+		{ "start":  9000.0, "length": 10000.0, "curve": -0.0003 },
+		{ "start": 19000.0, "length": 10000.0, "curve":  0.0003 },
+		{ "start": 31000.0, "length":100000.0, "curve":  0 }
 ]
 
 # ------------------------------------------------------------------
@@ -102,175 +102,174 @@ var sky_frame_time: float         = 0.0      # accumulates time for sky animatio
 #                              Setup
 # ------------------------------------------------------------------
 func _ready() -> void:
-        randomize()           # ensure different random trees each run
-        _build_track()        # pre-generate the array of road segments
+		randomize()           # ensure different random trees each run
+		_build_track()        # pre-generate the array of road segments
 
-        # Determine where the finish line is by looking at the furthest
-        # end point from our curve definitions.
-        finish_z = 0.0
-        for def in curve_defs:
-                finish_z = max(finish_z, def.start + def.length)
+		# Determine where the finish line is by looking at the furthest
+		# end point from our curve definitions.
+		finish_z = 0.0
+		for def in curve_defs:
+				finish_z = max(finish_z, def.start + def.length)
 
 # ------------------------------------------------------------------
-#                       Per-frame update
+						 #                       Per-frame update
 # ------------------------------------------------------------------
 func _process(delta: float) -> void:
-        # -- Speed and forward movement --
-        # Holding "ui_select" acts as the accelerator.
-        var throttle = Input.is_action_pressed("ui_select")
-        var target_speed = max_speed if throttle else base_speed
-        var speed_rate = accel_rate if throttle else decel_rate
-        current_speed = lerp(current_speed, target_speed, clamp(delta * speed_rate, 0.0, 0.9))
+		# -- Speed and forward movement --
+		# Holding "ui_select" acts as the accelerator.
+		var throttle = Input.is_action_pressed("ui_select")
+		var target_speed = max_speed if throttle else base_speed
+		var speed_rate = accel_rate if throttle else decel_rate
+		current_speed = lerp(current_speed, target_speed, clamp(delta * speed_rate, 0.0, 0.9))
 
-        # Advance the player along the track.  fposmod keeps the value
-        # within the total length so the road loops forever.
-        player_z = fposmod(player_z + delta * current_speed, segment_count * segment_length)
+		# Advance the player along the track.  fposmod keeps the value
+		# within the total length so the road loops forever.
+		player_z = fposmod(player_z + delta * current_speed, segment_count * segment_length)
 
-        # -- Finish line check --
-        if not race_finished and player_z >= finish_z:
-                race_finished = true
-                emit_signal("track_completed")
-                if finish_scene_path != "":
-                        get_tree().change_scene(finish_scene_path)
-                else:
-                        get_tree().quit()
-                return
+		# -- Finish line check --
+		if not race_finished and player_z >= finish_z:
+				race_finished = true
+				emit_signal("track_completed")
+				if finish_scene_path != "":
+						get_tree().change_scene(finish_scene_path)
+				else:
+						get_tree().quit()
+				return
 
-        # -- Steering smoothing --
-        smooth_steering = lerp(smooth_steering, steering, clamp(delta * steer_smooth_rate, 0.0, 1.5))
-        var speed_factor = clamp(current_speed / max_speed, 0.0, 1.0)
+		# -- Steering smoothing --
+		smooth_steering = lerp(smooth_steering, steering, clamp(delta * steer_smooth_rate, 0.0, 1.5))
+		var speed_factor = clamp(current_speed / max_speed, 0.0, 1.0)
 
-        # -- Determine road curvature based on player position --
-        var curve_val: float = 0.0
-        for def in curve_defs:
-                if player_z >= def.start and player_z < def.start + def.length:
-                        var t: float = (player_z - def.start) / def.length
-                        # Smoothly ease into and out of the curve
-                        curve_val = def.curve * sin(t * PI)
-                        break
+		# -- Determine road curvature based on player position --
+		var curve_val: float = 0.0
+		for def in curve_defs:
+				if player_z >= def.start and player_z < def.start + def.length:
+						var t: float = (player_z - def.start) / def.length
+						# Smoothly ease into and out of the curve
+						curve_val = def.curve * sin(t * PI)
+						break
 
-        # -- Blend the current curve with steering influence --
-        if current_speed > 10.0:
-                current_curve = lerp(
-                        current_curve,
-                        curve_val + smooth_steering * steer_influence * speed_factor,
-                        0.2
-                )
-        else:
-                current_curve = lerp(current_curve, curve_val, 0.2)
+		# -- Blend the current curve with steering influence --
+		if current_speed > 10.0:
+				current_curve = lerp(
+						current_curve,
+						curve_val + smooth_steering * steer_influence * speed_factor,
+						0.2
+				)
+		else:
+				current_curve = lerp(current_curve, curve_val, 0.2)
 
-        # Update the sky animation frame
-        if sky_anim_speed > 0:
-                sky_frame_time += delta
-                if sky_frame_time >= 1.0 / sky_anim_speed:
-                        sky_frame_time = 0.0
-                        sky_frame = (sky_frame + 1) % sky_frame_count
+		# Update the sky animation frame
+		if sky_anim_speed > 0:
+				sky_frame_time += delta
+				if sky_frame_time >= 1.0 / sky_anim_speed:
+						sky_frame_time = 0.0
+						sky_frame = (sky_frame + 1) % sky_frame_count
 
-        queue_redraw()  # request a call to _draw() next frame
+		queue_redraw()  # request a call to _draw() next frame
 
 # ------------------------------------------------------------------
 #                          Drawing routine
 # ------------------------------------------------------------------
 func _draw() -> void:
-        var vs = get_viewport_rect().size
-        var cx = vs.x * 0.5                       # screen centre X
-        var horizon_y = vs.y * horizon_pct        # horizon line Y
+		var vs = get_viewport_rect().size
+		var cx = vs.x * 0.5                       # screen centre X
+		var horizon_y = vs.y * horizon_pct        # horizon line Y
 
-        # ----- draw the animated sky -----
-        if sky_texture:
-                var sky_f_w = sky_texture.get_width() / float(sky_frame_count)
-                var sky_f_h = sky_texture.get_height()
-                var scale = horizon_y / sky_f_h
-                var sky_w = sky_f_w * scale
-                var x = 0.0
-                while x < vs.x:
-                        var src = Rect2(sky_f_w * sky_frame, 0, sky_f_w, sky_f_h)
-                        var dest = Rect2(x, 0, sky_w, horizon_y)
-                        draw_texture_rect_region(sky_texture, dest, src)
-                        x += sky_w
+		# ----- draw the animated sky -----
+		if sky_texture:
+				var sky_f_w = sky_texture.get_width() / float(sky_frame_count)
+				var sky_f_h = sky_texture.get_height()
+				var scale = horizon_y / sky_f_h
+				var sky_w = sky_f_w * scale
+				var x = 0.0
+				while x < vs.x:
+						var src = Rect2(sky_f_w * sky_frame, 0, sky_f_w, sky_f_h)
+						var dest = Rect2(x, 0, sky_w, horizon_y)
+						draw_texture_rect_region(sky_texture, dest, src)
+						x += sky_w
 
-        # Pre-calc tree frame size for later use
-        var frame_w = 0.0
-        var frame_h = 0.0
-        if tree_texture:
-                frame_w = tree_texture.get_width() / float(tree_frame_count)
-                frame_h = tree_texture.get_height()
+		# Pre-calc tree frame size for later use
+		var frame_w = 0.0
+		var frame_h = 0.0
+		if tree_texture:
+				frame_w = tree_texture.get_width() / float(tree_frame_count)
+				frame_h = tree_texture.get_height()
 
-        var x_off = 0.0     # horizontal offset from curves
-        var dx = 0.0        # incremental change in offset
-        var base_i = int(player_z / segment_length) % segment_count
+		var x_off = 0.0     # horizontal offset from curves
+		var dx = 0.0        # incremental change in offset
+		var base_i = int(player_z / segment_length) % segment_count
 
-        # Render segments from farthest to nearest so nearer ones draw over
-        for n in range(draw_distance - 1, -1, -1):
-                var seg = segments[(base_i + n) % segment_count]
-                var next_seg = segments[(base_i + n + 1) % segment_count]
+		# Render segments from farthest to nearest so nearer ones draw over
+		for n in range(draw_distance - 1, -1, -1):
+				var seg = segments[(base_i + n) % segment_count]
+				var next_seg = segments[(base_i + n + 1) % segment_count]
 
-                var rel_z1 = seg.z - player_z
-                var rel_z2 = next_seg.z - player_z
-                if rel_z1 <= 0.0 or rel_z2 <= 0.0:
-                        continue  # behind the player
+				var rel_z1 = seg.z - player_z
+				var rel_z2 = next_seg.z - player_z
+				if rel_z1 <= 0.0 or rel_z2 <= 0.0:
+						continue  # behind the player
 
-                # Convert 3D segment endpoints to 2D screen values
-                var scale1 = camera_depth / rel_z1
-                var scale2 = camera_depth / rel_z2
-                var w1 = road_width * scale1
-                var w2 = road_width * scale2
-                var y1 = horizon_y + camera_height * scale1
-                var y2 = horizon_y + camera_height * scale2
-                var x1 = cx + x_off
-                var x2 = cx + x_off + dx
+				# Convert 3D segment endpoints to 2D screen values
+				var scale1 = camera_depth / rel_z1
+				var scale2 = camera_depth / rel_z2
+				var w1 = road_width * scale1
+				var w2 = road_width * scale2
+				var y1 = horizon_y + camera_height * scale1
+				var y2 = horizon_y + camera_height * scale2
+				var x1 = cx + x_off
+				var x2 = cx + x_off + dx
 
-                # Draw the road quad for this segment
-                var quad = PackedVector2Array([
-                        Vector2(x1 - w1, y1),
-                        Vector2(x1 + w1, y1),
-                        Vector2(x2 + w2, y2),
-                        Vector2(x2 - w2, y2)
-                ])
-                draw_polygon(quad, PackedColorArray([seg.color]))
+				# Draw the road quad for this segment
+				var quad = PackedVector2Array([
+						Vector2(x1 - w1, y1),
+						Vector2(x1 + w1, y1),
+						Vector2(x2 + w2, y2),
+						Vector2(x2 - w2, y2)
+				])
+				draw_polygon(quad, PackedColorArray([seg.color]))
 
-                # ---- optional tree drawing ----
-                if seg.get("tree", 0) != 0:
-                        var tree_x = x1 + seg.tree * (w1 + tree_offset * scale1)
-                        var tree_y = y1
-                        var tree_h = tree_size * scale1
-                        if tree_texture:
-                                var frame_idx = seg.get("tree_frame", 0)
-                                var src = Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
-                                var dest_w = tree_h * (frame_w / frame_h)
-                                var rect = Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
-                                draw_texture_rect_region(tree_texture, rect, src)
-                        else:
-                                var tw = tree_h * 0.5
-                                var tri = PackedVector2Array([
-                                        Vector2(tree_x, tree_y - tree_h),
-                                        Vector2(tree_x - tw, tree_y),
-                                        Vector2(tree_x + tw, tree_y)
-                                ])
-                                draw_polygon(tri, PackedColorArray([tree_color]))
+				# ---- optional tree drawing ----
+				if seg.get("tree", 0) != 0:
+						var tree_x = x1 + seg.tree * (w1 + tree_offset * scale1)
+						var tree_y = y1
+						var tree_h = tree_size * scale1
+						if tree_texture:
+								var frame_idx = seg.get("tree_frame", 0)
+								var src = Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
+								var dest_w = tree_h * (frame_w / frame_h)
+								var rect = Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
+								draw_texture_rect_region(tree_texture, rect, src)
+						else:
+								var tw = tree_h * 0.5
+								var tri = PackedVector2Array([
+										Vector2(tree_x, tree_y - tree_h),
+										Vector2(tree_x - tw, tree_y),
+										Vector2(tree_x + tw, tree_y)
+								])
+								draw_polygon(tri, PackedColorArray([tree_color]))
 
-                # Apply the current curve to shift the road sideways
-                dx -= current_curve * curve_scale
-                x_off -= dx
+				# Apply the current curve to shift the road sideways
+				dx -= current_curve * curve_scale
+				x_off -= dx
 
 # ------------------------------------------------------------------
 #                     Segment data generation
 # ------------------------------------------------------------------
 func _build_track() -> void:
-        segments.clear()
-        var z_pos := 0.0
-        var side := 1  # used to alternate tree placement left/right
-        for i in range(segment_count):
-                var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
-                var seg := {
-                        "z": z_pos,        # world Z position of this segment
-                        "color": seg_color,
-                        "tree": 0          # 0 means no tree on this segment
-                }
-                if tree_spacing > 0 and i % tree_spacing == 0:
-                        seg.tree = side
-                        seg.tree_frame = randi() % tree_frame_count
-                        side = -side       # next tree goes on the other side
-                segments.append(seg)
-                z_pos += segment_length
-
+		segments.clear()
+		var z_pos := 0.0
+		var side := 1  # used to alternate tree placement left/right
+		for i in range(segment_count):
+				var seg_color = Color8(105,105,105) if i % 2 == 0 else Color8(115,115,115)
+				var seg := {
+						"z": z_pos,        # world Z position of this segment
+						"color": seg_color,
+						"tree": 0          # 0 means no tree on this segment
+				}
+				if tree_spacing > 0 and i % tree_spacing == 0:
+						seg.tree = side
+						seg.tree_frame = randi() % tree_frame_count
+						side = -side       # next tree goes on the other side
+				segments.append(seg)
+				z_pos += segment_length
