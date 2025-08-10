@@ -9,6 +9,7 @@ extends Sprite2D
 # --- Link to the RoadRenderer node ---------------------------------
 @export var road_gen_path: NodePath = NodePath("../Node2D")
 @onready var road_gen = get_node_or_null(road_gen_path) # resolved on scene load
+@onready var hitbox: Area2D = $Hitbox
 
 # --- Frame indices for the sprite sheet -----------------------------
 const FRAME_LEFT_HARD   = 0
@@ -36,14 +37,15 @@ var left_hold: float  = 0.0      # how long the left key has been held
 var right_hold: float = 0.0      # how long the right key has been held
 
 func _ready() -> void:
-		# Enable regions so we can display one frame from the sprite sheet.
-		region_enabled = true
-		# Determine frame width from the texture if not supplied.
-		if frame_width <= 0 and texture:
-				frame_width = int(texture.get_width() / 5)
-		_apply_frame(FRAME_CENTER)
-		scale = scale_factor
-		_update_position()
+                # Enable regions so we can display one frame from the sprite sheet.
+                region_enabled = true
+                # Determine frame width from the texture if not supplied.
+                if frame_width <= 0 and texture:
+                                frame_width = int(texture.get_width() / 5)
+                _apply_frame(FRAME_CENTER)
+                scale = scale_factor
+                _update_position()
+                hitbox.body_entered.connect(_on_hitbox_body_entered)
 
 func _process(delta: float) -> void:
 		# ------------------------------------------------------------
@@ -80,10 +82,14 @@ func _process(delta: float) -> void:
 		_update_position()
 
 		# Pass steering information to the road renderer so it can bend.
-		if road_gen:
-				road_gen.steering = steer_val
-		else:
-				push_warning("RoadRenderer not found: %s" % road_gen_path)
+                if road_gen:
+                                road_gen.steering = steer_val
+                else:
+                                push_warning("RoadRenderer not found: %s" % road_gen_path)
+
+func _on_hitbox_body_entered(body: Node) -> void:
+                if road_gen:
+                                road_gen.current_speed *= 0.5
 
 # ------------------------------------------------------------------
 # Helper functions
