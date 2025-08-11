@@ -4,11 +4,11 @@
 script/source = "extends Sprite2D
 
 enum Frame {
-	LEFT_HARD,
-	LEFT_SOFT,
-	CENTER,
-	RIGHT_SOFT,
-	RIGHT_HARD
+    LEFT_HARD,
+    LEFT_SOFT,
+    CENTER,
+    RIGHT_SOFT,
+    RIGHT_HARD
 }
 
 # ── Sprite sheet setup ──
@@ -26,69 +26,69 @@ var left_hold: float = 0.0
 var right_hold: float = 0.0
 
 func _ready() -> void:
-	region_enabled = true
-	if frame_width <= 0 and texture:
-		# Assume strip of 5 frames
-		frame_width = int(texture.get_width() / 5)
-	# Initialize to center frame
-	_update_region(Frame.CENTER)
+    region_enabled = true
+    if frame_width <= 0 and texture:
+        # Assume strip of 5 frames
+        frame_width = int(texture.get_width() / 5)
+    # Initialize to center frame
+    _update_region(Frame.CENTER)
 
 func _process(delta: float) -> void:
-	# 1) Input and hold timers
-	var steer_left = Input.is_action_pressed(\"ui_left\")
-	var steer_right = Input.is_action_pressed(\"ui_right\")
-	if steer_left:
-		left_hold += delta
-		right_hold = 0.0
-	elif steer_right:
-		right_hold += delta
-		left_hold = 0.0
-	else:
-		left_hold = 0.0
-		right_hold = 0.0
+    # 1) Input and hold timers
+    var steer_left = Input.is_action_pressed(\"ui_left\")
+    var steer_right = Input.is_action_pressed(\"ui_right\")
+    if steer_left:
+        left_hold += delta
+        right_hold = 0.0
+    elif steer_right:
+        right_hold += delta
+        left_hold = 0.0
+    else:
+        left_hold = 0.0
+        right_hold = 0.0
 
-	# 2) Select frame
-	var frame_index: int = Frame.CENTER
-	if left_hold > 0.0:
-		if left_hold >= turn_hold_time:
-			frame_index = Frame.LEFT_HARD
-		else:
-			frame_index = Frame.LEFT_SOFT
-	elif right_hold > 0.0:
-		if right_hold >= turn_hold_time:
-			frame_index = Frame.RIGHT_HARD
-		else:
-			frame_index = Frame.RIGHT_SOFT
+    # 2) Select frame
+    var frame_index: int = Frame.CENTER
+    if left_hold > 0.0:
+        if left_hold >= turn_hold_time:
+            frame_index = Frame.LEFT_HARD
+        else:
+            frame_index = Frame.LEFT_SOFT
+    elif right_hold > 0.0:
+        if right_hold >= turn_hold_time:
+            frame_index = Frame.RIGHT_HARD
+        else:
+            frame_index = Frame.RIGHT_SOFT
 
-	# 3) Apply the selected frame
-	_update_region(frame_index)
+    # 3) Apply the selected frame
+    _update_region(frame_index)
 
-	# 4) Compute steering value
-	var steer_val: float = 0.0
-	if steer_right:
-		steer_val = 1.0
-	elif steer_left:
-		steer_val = -1.0
+    # 4) Compute steering value
+    var steer_val: float = 0.0
+    if steer_right:
+        steer_val = 1.0
+    elif steer_left:
+        steer_val = -1.0
 
-	# 5) Send to Road Generator (sibling under World)
-	var road = get_parent().get_node(\"Road Generator\")
-	if road:
-		road.steering = steer_val
+    # 5) Send to Road Generator (sibling under World)
+    var road = get_parent().get_node(\"Road Generator\")
+    if road:
+        road.steering = steer_val
 
-	# 6) Drift the car
-	var center_x = get_viewport_rect().size.x * 0.5
-	var target_x = center_x + steer_val * max_drift
-	position.x = lerp(position.x, target_x, drift_speed * delta)
+    # 6) Drift the car
+    var center_x = get_viewport_rect().size.x * 0.5
+    var target_x = center_x + steer_val * max_drift
+    position.x = lerp(position.x, target_x, drift_speed * delta)
 
-	# 7) Tilt the car
-	var target_rot = deg_to_rad(steer_val * max_tilt)
-	rotation = lerp_angle(rotation, target_rot, tilt_speed * delta)
+    # 7) Tilt the car
+    var target_rot = deg_to_rad(steer_val * max_tilt)
+    rotation = lerp_angle(rotation, target_rot, tilt_speed * delta)
 
 # Helper to update the sprite region
 func _update_region(frame_index: int) -> void:
-	if texture and frame_width > 0:
-		var h = texture.get_height()
-		region_rect = Rect2(frame_index * frame_width, 0, frame_width, h)
+    if texture and frame_width > 0:
+        var h = texture.get_height()
+        region_rect = Rect2(frame_index * frame_width, 0, frame_width, h)
 "
 
 [node name="Sprite2D" type="Sprite2D"]

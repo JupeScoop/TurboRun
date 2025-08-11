@@ -22,6 +22,12 @@ const FRAME_RIGHT_HARD  = 4
 @export var frame_width: int      = 0    # width of a single frame
 @export var turn_hold_time: float = 0.5  # time before a soft turn becomes hard
 
+# --- Horizontal drift ----------------------------------------------
+# Allows the car to slide left/right from the screen centre when
+# steering so it can contact the side walls.
+@export var max_drift: float  = 300.0   # maximum offset from centre in pixels
+@export var drift_speed: float = 5.0    # interpolation rate for drifting
+
 # --- Optional tilt tuning (disabled) -------------------------------
 # Uncomment these exports if you want the car to visually tilt while
 # steering.  They are left commented to keep the example simple.
@@ -44,44 +50,48 @@ func _ready() -> void:
                                 frame_width = int(texture.get_width() / 5)
                 _apply_frame(FRAME_CENTER)
                 scale = scale_factor
+                position.x = get_viewport_rect().size.x * 0.5
                 _update_position()
                 hitbox.body_entered.connect(_on_hitbox_body_entered)
 
 func _process(delta: float) -> void:
-		# ------------------------------------------------------------
-		# Read keyboard input and choose the appropriate sprite frame.
-		# ------------------------------------------------------------
-		var steer_left = Input.is_action_pressed("ui_left")
-		var steer_right = Input.is_action_pressed("ui_right")
-		if steer_left:
-				left_hold += delta; right_hold = 0.0
-		elif steer_right:
-				right_hold += delta; left_hold = 0.0
-		else:
-				left_hold = 0.0; right_hold = 0.0
+        # ------------------------------------------------------------
+        # Read keyboard input and choose the appropriate sprite frame.
+        # ------------------------------------------------------------
+        var steer_left = Input.is_action_pressed("ui_left")
+        var steer_right = Input.is_action_pressed("ui_right")
+        if steer_left:
+                left_hold += delta; right_hold = 0.0
+        elif steer_right:
+                right_hold += delta; left_hold = 0.0
+        else:
+                left_hold = 0.0; right_hold = 0.0
 
-		# Decide which animation frame to show based on hold times.
-		var sel_frame = FRAME_CENTER
-		if left_hold > 0.0:
-				sel_frame = FRAME_LEFT_HARD if left_hold >= turn_hold_time else FRAME_LEFT_SOFT
-		elif right_hold > 0.0:
-				sel_frame = FRAME_RIGHT_HARD if right_hold >= turn_hold_time else FRAME_RIGHT_SOFT
-		_apply_frame(sel_frame)
+        # Decide which animation frame to show based on hold times.
+        var sel_frame = FRAME_CENTER
+        if left_hold > 0.0:
+                sel_frame = FRAME_LEFT_HARD if left_hold >= turn_hold_time else FRAME_LEFT_SOFT
+        elif right_hold > 0.0:
+                sel_frame = FRAME_RIGHT_HARD if right_hold >= turn_hold_time else FRAME_RIGHT_SOFT
+        _apply_frame(sel_frame)
 
-		# Convert input into a steering value: -1 means right, +1 means left.
-		var steer_val: float = -1.0 if steer_right else (1.0 if steer_left else 0.0)
+                # Convert input into a steering value: -1 means right, +1 means left.
+                var steer_val: float = -1.0 if steer_right else (1.0 if steer_left else 0.0)
 
-		# Keep the car horizontally centred; the road scrolls underneath.
-		position.x = get_viewport_rect().size.x * 0.5
+                # Drift horizontally around the screen centre based on steering.
+                var center_x = get_viewport_rect().size.x * 0.5
+                var target_x = center_x + steer_val * max_drift
+                position.x = lerp(position.x, target_x, drift_speed * delta)
 
-		# Optional tilt effect for feedback (disabled above).
-		# var target_rot = deg_to_rad(steer_val * max_tilt)
-		# rotation = lerp_angle(rotation, target_rot, tilt_speed * delta)
+                # Optional tilt effect for feedback (disabled above).
+                # var target_rot = deg_to_rad(steer_val * max_tilt)
+                # rotation = lerp_angle(rotation, target_rot, tilt_speed * delta)
 
-		# Stick the sprite to the bottom of the viewport.
-		_update_position()
+                # Stick the sprite to the bottom of the viewport.
+                _update_position()
 
-		# Pass steering information to the road renderer so it can bend.
+                # Pass steering information to the road renderer so it can bend.
+
                 if road_gen:
                                 road_gen.steering = steer_val
                 else:
@@ -97,14 +107,14 @@ func _on_hitbox_body_entered(body: Node) -> void:
 
 # Position the sprite vertically relative to the viewport size.
 func _update_position() -> void:
-		if not texture:
-				return
-		var vh = get_viewport_rect().size.y
-		var sh = texture.get_height() * scale_factor.y
-		position.y = vh - sh * 0.5 - bottom_margin
+        if not texture:
+                return
+        var vh = get_viewport_rect().size.y
+        var sh = texture.get_height() * scale_factor.y
+        position.y = vh - sh * 0.5 - bottom_margin
 
 # Show only the requested frame of the sprite sheet.
 func _apply_frame(frame_index: int) -> void:
-		if texture and frame_width > 0:
-				var h = texture.get_height()
-				region_rect = Rect2(frame_index * frame_width, 0, frame_width, h)
+        if texture and frame_width > 0:
+                var h = texture.get_height()
+                region_rect = Rect2(frame_index * frame_width, 0, frame_width, h)
