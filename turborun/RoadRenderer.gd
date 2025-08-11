@@ -70,8 +70,8 @@ signal track_completed
 		{ "start":  1000.0, "length":  8000.0, "curve":  0.0002 },
 		{ "start":  9000.0, "length": 10000.0, "curve": -0.0003 },
 		{ "start": 19000.0, "length": 10000.0, "curve":  0.0003 },
-		{ "start": 31000.0, "length":10000.0, "curve":  0.00001 },
-		{ "start": 41000.0, "length":100000.0, "curve":  -0.0005 },
+		{ "start": 31000.0, "length":10000.0, "curve":  0.0001 },
+		{ "start": 41000.0, "length":100000.0, "curve":  -0.0004 },
 		{ "start": 151000.0, "length":10000.0, "curve":  0 } 
 ]
 
