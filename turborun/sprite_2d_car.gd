@@ -77,4 +77,15 @@ func _process(delta: float) -> void:
 
 	# 8) Tilt car into the turn
 	var target_r = deg_to_rad(steer_val * max_tilt)
-	rotation = lerp_angle(rotation, target_r, tilt_speed * delta)
+        rotation = lerp_angle(rotation, target_r, tilt_speed * delta)
+
+# Resets the car to the horizontal centre of the screen and clears any steering.
+func reset_to_center() -> void:
+        var center_x = get_viewport_rect().size.x * 0.5
+        position.x = center_x
+        rotation = 0.0
+        left_hold = 0.0
+        right_hold = 0.0
+        var road = get_parent().get_node("Road Generator")
+        if road:
+                road.steering = 0.0
