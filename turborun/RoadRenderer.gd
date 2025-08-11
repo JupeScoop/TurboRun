@@ -58,6 +58,20 @@ signal track_completed
 @export var tree_frame_count: int   = 7     # frames in the tree sprite sheet
 
 # ------------------------------------------------------------------
+#                         Collision wall nodes
+# ------------------------------------------------------------------
+# Optional NodePaths to StaticBody2D nodes that act as track edge
+# colliders.  These are repositioned each frame to match the nearest
+# road segment, allowing the car to hit a "wall" that follows the
+# road's curves.
+@export var left_wall_path: NodePath
+@export var right_wall_path: NodePath
+@onready var left_wall: Node2D = get_node_or_null(left_wall_path)
+@onready var right_wall: Node2D = get_node_or_null(right_wall_path)
+var wall_half_width: float = 0.0
+var wall_half_height: float = 0.0
+
+# ------------------------------------------------------------------
 #                      Track curvature definitions
 # ------------------------------------------------------------------
 # Each dictionary describes a bend in the road:
@@ -102,14 +116,22 @@ var sky_frame_time: float         = 0.0      # accumulates time for sky animatio
 #                              Setup
 # ------------------------------------------------------------------
 func _ready() -> void:
-		randomize()           # ensure different random trees each run
-		_build_track()        # pre-generate the array of road segments
+                randomize()           # ensure different random trees each run
+                _build_track()        # pre-generate the array of road segments
 
-		# Determine where the finish line is by looking at the furthest
-		# end point from our curve definitions.
-		finish_z = 0.0
-		for def in curve_defs:
-				finish_z = max(finish_z, def.start + def.length)
+                # Determine where the finish line is by looking at the furthest
+                # end point from our curve definitions.
+                finish_z = 0.0
+                for def in curve_defs:
+                                finish_z = max(finish_z, def.start + def.length)
+
+                # Cache wall collider half sizes if they exist
+                if left_wall:
+                                var lshape = left_wall.get_node_or_null("CollisionShape2D")
+                                if lshape and lshape.shape is RectangleShape2D:
+                                                var rect: RectangleShape2D = lshape.shape
+                                                wall_half_width = rect.size.x * 0.5
+                                                wall_half_height = rect.size.y * 0.5
 
 # ------------------------------------------------------------------
 						 #                       Per-frame update
@@ -160,17 +182,47 @@ func _process(delta: float) -> void:
 				current_curve = lerp(current_curve, curve_val, 0.2)
 
 		# Update the sky animation frame
-		if sky_anim_speed > 0:
-				sky_frame_time += delta
-				if sky_frame_time >= 1.0 / sky_anim_speed:
-						sky_frame_time = 0.0
-						sky_frame = (sky_frame + 1) % sky_frame_count
+                if sky_anim_speed > 0:
+                                sky_frame_time += delta
+                                if sky_frame_time >= 1.0 / sky_anim_speed:
+                                                sky_frame_time = 0.0
+                                                sky_frame = (sky_frame + 1) % sky_frame_count
 
-		queue_redraw()  # request a call to _draw() next frame
+                _update_walls()
+                queue_redraw()  # request a call to _draw() next frame
 
 # ------------------------------------------------------------------
 #                          Drawing routine
 # ------------------------------------------------------------------
+func _update_walls() -> void:
+                if not left_wall or not right_wall:
+                                return
+                var vs = get_viewport_rect().size
+                var cx = vs.x * 0.5
+                var horizon_y = vs.y * horizon_pct
+                var base_i = int(player_z / segment_length) % segment_count
+                var x_off = 0.0
+                var dx = 0.0
+                var left_pos := Vector2()
+                var right_pos := Vector2()
+                for n in range(draw_distance - 1, -1, -1):
+                                var seg = segments[(base_i + n) % segment_count]
+                                var next_seg = segments[(base_i + n + 1) % segment_count]
+                                var rel_z1 = seg.z - player_z
+                                var rel_z2 = next_seg.z - player_z
+                                if rel_z1 <= 0.0 or rel_z2 <= 0.0:
+                                                continue
+                                var scale1 = camera_depth / rel_z1
+                                var w1 = road_width * scale1
+                                var y1 = horizon_y + camera_height * scale1
+                                var x1 = cx + x_off
+                                left_pos = Vector2(x1 - w1 - wall_half_width, y1 - wall_half_height)
+                                right_pos = Vector2(x1 + w1 + wall_half_width, y1 - wall_half_height)
+                                dx -= current_curve * curve_scale
+                                x_off -= dx
+                left_wall.position = left_pos
+                right_wall.position = right_pos
+
 func _draw() -> void:
 		var vs = get_viewport_rect().size
 		var cx = vs.x * 0.5                       # screen centre X
