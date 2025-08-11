@@ -70,7 +70,9 @@ signal track_completed
 		{ "start":  1000.0, "length":  8000.0, "curve":  0.0002 },
 		{ "start":  9000.0, "length": 10000.0, "curve": -0.0003 },
 		{ "start": 19000.0, "length": 10000.0, "curve":  0.0003 },
-		{ "start": 31000.0, "length":100000.0, "curve":  0 }
+		{ "start": 31000.0, "length":10000.0, "curve":  0.00001 },
+		{ "start": 41000.0, "length":100000.0, "curve":  -0.0005 },
+		{ "start": 151000.0, "length":10000.0, "curve":  0 } 
 ]
 
 # ------------------------------------------------------------------
@@ -107,9 +109,16 @@ func _ready() -> void:
 
 		# Determine where the finish line is by looking at the furthest
 		# end point from our curve definitions.
+	# 1) finish at the end of the last curve
 		finish_z = 0.0
 		for def in curve_defs:
-				finish_z = max(finish_z, def.start + def.length)
+			finish_z = max(finish_z, float(def.start) + float(def.length))
+
+		# 2) ensure we have enough segments to cover finish_z
+		var track_len := float(segment_count) * segment_length
+		if track_len < finish_z:
+			segment_count = int(ceil(finish_z / segment_length)) + 1
+			_build_track()  # rebuild with the larger count
 
 # ------------------------------------------------------------------
 						 #                       Per-frame update
@@ -124,8 +133,12 @@ func _process(delta: float) -> void:
 
 		# Advance the player along the track.  fposmod keeps the value
 		# within the total length so the road loops forever.
-		player_z = fposmod(player_z + delta * current_speed, segment_count * segment_length)
+		#player_z = fposmod(player_z + delta * current_speed, segment_count * segment_length)
+		# 3) advance with NO wrap
+		player_z += current_speed * delta
 
+		# optional: slow down near finish
+		if finish_z - player_z < 2000.0: current_speed = min(current_speed, 600.0)
 		# -- Finish line check --
 		if not race_finished and player_z >= finish_z:
 				race_finished = true
@@ -172,86 +185,91 @@ func _process(delta: float) -> void:
 #                          Drawing routine
 # ------------------------------------------------------------------
 func _draw() -> void:
-		var vs = get_viewport_rect().size
-		var cx = vs.x * 0.5                       # screen centre X
-		var horizon_y = vs.y * horizon_pct        # horizon line Y
+	var vs: Vector2 = get_viewport_rect().size
+	var cx: float = vs.x * 0.5                 # screen centre X
+	var horizon_y: float = vs.y * horizon_pct  # horizon line Y
 
-		# ----- draw the animated sky -----
-		if sky_texture:
-				var sky_f_w = sky_texture.get_width() / float(sky_frame_count)
-				var sky_f_h = sky_texture.get_height()
-				var scale = horizon_y / sky_f_h
-				var sky_w = sky_f_w * scale
-				var x = 0.0
-				while x < vs.x:
-						var src = Rect2(sky_f_w * sky_frame, 0, sky_f_w, sky_f_h)
-						var dest = Rect2(x, 0, sky_w, horizon_y)
-						draw_texture_rect_region(sky_texture, dest, src)
-						x += sky_w
+	# ----- draw the animated sky -----
+	if sky_texture:
+		var sky_f_w: float = sky_texture.get_width() / float(sky_frame_count)
+		var sky_f_h: float = sky_texture.get_height()
+		var scale: float = horizon_y / sky_f_h
+		var sky_w: float = sky_f_w * scale
+		var x: float = 0.0
+		while x < vs.x:
+			var src := Rect2(sky_f_w * sky_frame, 0, sky_f_w, sky_f_h)
+			var dest := Rect2(x, 0, sky_w, horizon_y)
+			draw_texture_rect_region(sky_texture, dest, src)
+			x += sky_w
 
-		# Pre-calc tree frame size for later use
-		var frame_w = 0.0
-		var frame_h = 0.0
-		if tree_texture:
-				frame_w = tree_texture.get_width() / float(tree_frame_count)
-				frame_h = tree_texture.get_height()
+	# Pre-calc tree frame size for later use
+	var frame_w: float = 0.0
+	var frame_h: float = 0.0
+	if tree_texture:
+		frame_w = tree_texture.get_width() / float(tree_frame_count)
+		frame_h = tree_texture.get_height()
 
-		var x_off = 0.0     # horizontal offset from curves
-		var dx = 0.0        # incremental change in offset
-		var base_i = int(player_z / segment_length) % segment_count
+	var x_off: float = 0.0     # horizontal offset from curves
+	var dx: float = 0.0        # incremental change in offset
+	var base_i: int = int(player_z / segment_length)
 
-		# Render segments from farthest to nearest so nearer ones draw over
-		for n in range(draw_distance - 1, -1, -1):
-				var seg = segments[(base_i + n) % segment_count]
-				var next_seg = segments[(base_i + n + 1) % segment_count]
+	# --- NEW: limit draw distance to finish line ---
+	var remaining: float = max(finish_z - player_z, 0.0)
+	var max_slices: int = min(draw_distance, int(ceil(remaining / segment_length)))
+	var last_i: int = min(base_i + max_slices, segment_count - 1)
 
-				var rel_z1 = seg.z - player_z
-				var rel_z2 = next_seg.z - player_z
-				if rel_z1 <= 0.0 or rel_z2 <= 0.0:
-						continue  # behind the player
+	# Render from farthest to nearest so nearer ones draw over
+	for i in range(last_i - 1, base_i - 1, -1):
+		var seg: Dictionary = segments[i]
+		var next_seg: Dictionary = segments[i + 1]
 
-				# Convert 3D segment endpoints to 2D screen values
-				var scale1 = camera_depth / rel_z1
-				var scale2 = camera_depth / rel_z2
-				var w1 = road_width * scale1
-				var w2 = road_width * scale2
-				var y1 = horizon_y + camera_height * scale1
-				var y2 = horizon_y + camera_height * scale2
-				var x1 = cx + x_off
-				var x2 = cx + x_off + dx
+		var rel_z1: float = seg.z - player_z
+		var rel_z2: float = next_seg.z - player_z
+		if rel_z1 <= 0.0 or rel_z2 <= 0.0:
+			continue  # behind the player
 
-				# Draw the road quad for this segment
-				var quad = PackedVector2Array([
-						Vector2(x1 - w1, y1),
-						Vector2(x1 + w1, y1),
-						Vector2(x2 + w2, y2),
-						Vector2(x2 - w2, y2)
+		# Convert 3D segment endpoints to 2D screen values
+		var scale1: float = camera_depth / rel_z1
+		var scale2: float = camera_depth / rel_z2
+		var w1: float = road_width * scale1
+		var w2: float = road_width * scale2
+		var y1: float = horizon_y + camera_height * scale1
+		var y2: float = horizon_y + camera_height * scale2
+		var x1: float = cx + x_off
+		var x2: float = cx + x_off + dx
+
+		# Draw the road quad for this segment
+		var quad := PackedVector2Array([
+			Vector2(x1 - w1, y1),
+			Vector2(x1 + w1, y1),
+			Vector2(x2 + w2, y2),
+			Vector2(x2 - w2, y2)
+		])
+		draw_polygon(quad, PackedColorArray([seg.color]))
+
+		# ---- optional tree drawing ----
+		if seg.get("tree", 0) != 0:
+			var tree_x: float = x1 + seg.tree * (w1 + tree_offset * scale1)
+			var tree_y: float = y1
+			var tree_h: float = tree_size * scale1
+			if tree_texture:
+				var frame_idx: int = seg.get("tree_frame", 0)
+				var src_tree := Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
+				var dest_w: float = tree_h * (frame_w / frame_h)
+				var rect := Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
+				draw_texture_rect_region(tree_texture, rect, src_tree)
+			else:
+				var tw: float = tree_h * 0.5
+				var tri := PackedVector2Array([
+					Vector2(tree_x, tree_y - tree_h),
+					Vector2(tree_x - tw, tree_y),
+					Vector2(tree_x + tw, tree_y)
 				])
-				draw_polygon(quad, PackedColorArray([seg.color]))
+				draw_polygon(tri, PackedColorArray([tree_color]))
 
-				# ---- optional tree drawing ----
-				if seg.get("tree", 0) != 0:
-						var tree_x = x1 + seg.tree * (w1 + tree_offset * scale1)
-						var tree_y = y1
-						var tree_h = tree_size * scale1
-						if tree_texture:
-								var frame_idx = seg.get("tree_frame", 0)
-								var src = Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
-								var dest_w = tree_h * (frame_w / frame_h)
-								var rect = Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
-								draw_texture_rect_region(tree_texture, rect, src)
-						else:
-								var tw = tree_h * 0.5
-								var tri = PackedVector2Array([
-										Vector2(tree_x, tree_y - tree_h),
-										Vector2(tree_x - tw, tree_y),
-										Vector2(tree_x + tw, tree_y)
-								])
-								draw_polygon(tri, PackedColorArray([tree_color]))
-
-				# Apply the current curve to shift the road sideways
-				dx -= current_curve * curve_scale
-				x_off -= dx
+		# Apply the current curve to shift the road sideways
+		dx -= current_curve * curve_scale
+		x_off -= dx                          
 
 # ------------------------------------------------------------------
 #                     Segment data generation
