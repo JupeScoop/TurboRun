@@ -188,21 +188,21 @@ func _process(delta: float) -> void:
 #                          Drawing routine
 # ------------------------------------------------------------------
 func _draw() -> void:
-        var vs: Vector2 = get_viewport_rect().size
-        var cx: float = vs.x * 0.5                 # screen centre X
-        var horizon_y: float = vs.y * horizon_pct  # horizon line Y
+	var vs: Vector2 = get_viewport_rect().size
+	var cx: float = vs.x * 0.5                 # screen centre X
+	var horizon_y: float = vs.y * horizon_pct  # horizon line Y
 
-        # Determine the car's current screen rectangle for collision checks
-        var car_rect := Rect2()
-        if car_sprite and car_sprite.texture:
-                var cw: float = car_sprite.frame_width
-                var ch: float = car_sprite.texture.get_height()
-                car_rect = Rect2(
-                        car_sprite.position.x - cw * 0.5,
-                        car_sprite.position.y - ch * 0.5,
-                        cw,
-                        ch
-                )
+	# Determine the car's current screen rectangle for collision checks
+	var car_rect := Rect2()
+	if car_sprite and car_sprite.texture:
+		var cw: float = car_sprite.frame_width
+		var ch: float = car_sprite.texture.get_height()
+		car_rect = Rect2(
+			car_sprite.position.x - cw * 0.5,
+			car_sprite.position.y - ch * 0.5,
+			cw,
+			ch
+		)
 
 	# ----- draw the animated sky -----
 	if sky_texture:
@@ -262,32 +262,32 @@ func _draw() -> void:
 		])
 		draw_polygon(quad, PackedColorArray([seg.color]))
 
-                # ---- optional tree drawing ----
-                if seg.get("tree", 0) != 0:
-                        var tree_x: float = x1 + seg.tree * (w1 + tree_offset * scale1)
-                        var tree_y: float = y1
-                        var tree_h: float = tree_size * scale1
-                        var tree_rect: Rect2
-                        if tree_texture:
-                                var frame_idx: int = seg.get("tree_frame", 0)
-                                var src_tree := Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
-                                var dest_w: float = tree_h * (frame_w / frame_h)
-                                tree_rect = Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
-                                draw_texture_rect_region(tree_texture, tree_rect, src_tree)
-                        else:
-                                var tw: float = tree_h * 0.5
-                                tree_rect = Rect2(tree_x - tw, tree_y - tree_h, tw * 2.0, tree_h)
-                                var tri := PackedVector2Array([
-                                        Vector2(tree_x, tree_y - tree_h),
-                                        Vector2(tree_x - tw, tree_y),
-                                        Vector2(tree_x + tw, tree_y)
-                                ])
-                                draw_polygon(tri, PackedColorArray([tree_color]))
+		# ---- optional tree drawing ----
+		if seg.get("tree", 0) != 0:
+			var tree_x: float = x1 + seg.tree * (w1 + tree_offset * scale1)
+			var tree_y: float = y1
+			var tree_h: float = tree_size * scale1
+			var tree_rect: Rect2
+			if tree_texture:
+				var frame_idx: int = seg.get("tree_frame", 0)
+				var src_tree := Rect2(frame_w * frame_idx, 0, frame_w, frame_h)
+				var dest_w: float = tree_h * (frame_w / frame_h)
+				tree_rect = Rect2(tree_x - dest_w * 0.5, tree_y - tree_h, dest_w, tree_h)
+				draw_texture_rect_region(tree_texture, tree_rect, src_tree)
+			else:
+				var tw: float = tree_h * 0.5
+				tree_rect = Rect2(tree_x - tw, tree_y - tree_h, tw * 2.0, tree_h)
+				var tri := PackedVector2Array([
+					Vector2(tree_x, tree_y - tree_h),
+					Vector2(tree_x - tw, tree_y),
+					Vector2(tree_x + tw, tree_y)
+				])
+				draw_polygon(tri, PackedColorArray([tree_color]))
 
-                        # Check for collision with the car
-                        if car_rect.has_area() and car_rect.intersects(tree_rect):
-                                if car_sprite and car_sprite.has_method("reset_to_center"):
-                                        car_sprite.reset_to_center()
+			# Check for collision with the car
+			if car_rect.has_area() and car_rect.intersects(tree_rect):
+				if car_sprite and car_sprite.has_method("reset_to_center"):
+					car_sprite.reset_to_center()
 
 		# Apply the current curve to shift the road sideways
 		dx -= current_curve * curve_scale
