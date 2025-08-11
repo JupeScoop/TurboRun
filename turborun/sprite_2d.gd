@@ -91,6 +91,7 @@ func _process(delta: float) -> void:
                 _update_position()
 
                 # Pass steering information to the road renderer so it can bend.
+
                 if road_gen:
                                 road_gen.steering = steer_val
                 else:
