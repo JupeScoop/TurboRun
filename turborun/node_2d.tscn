@@ -19,6 +19,8 @@ size = Vector2(80, 40)
 [node name="Node2D" type="Node2D"]
 
 [node name="Node2D" parent="." instance=ExtResource("1_epypp")]
+left_wall_path = NodePath("../LeftWall")
+right_wall_path = NodePath("../RightWall")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_0e48y")
